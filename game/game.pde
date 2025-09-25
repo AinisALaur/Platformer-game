@@ -1,47 +1,61 @@
+//Images
 PImage character_idle;
 PImage character_run;
 PImage character_jump;
 PImage character_fall;
 PImage character_double_jump;
-
+PImage levelOneHitBoxes;
+PImage levelTwoHitBoxes;
+PImage levelThreeHitBoxes;
 PImage background;
+
+
+//Animations
 int idleFrame = 0;
 int idleDelay = 6;
 int idleCounter = 0;
-
 int runFrame = 0;
 int runDelay = 4;
 int runCounter = 0;
-
 int doubleJumpFrame = 0;
 int doubleJumpDelay = 4;
 int doubleJumpCounter = 0;
-
-int x = 0;
-int y = 512;
-
-char direction = 'l';
-
-int runSpeed = 2;
-
-boolean runLeft = false;
-boolean runRight = false;
-
-boolean onGround = true;
-
-float vy = 0;
-float gravity = 0.8;
-float jumpPower = -15;
-
 boolean showRunAnimation = true;
-boolean peakReached = false;
-float yPeak;
-
-boolean doubleJumpPressed = false;
 boolean showJump = true;
 
-//------------------------------------------------------------
 
+//Character properties
+int x = 0;
+int y = 512;
+float vy = 0;
+char direction = 'l';
+int runSpeed = 2;
+boolean onGround = true;
+float jumpPower = -15;
+boolean doubleJumpPressed = false;
+
+
+//Physics
+float gravity = 0.8;
+float yPeak;
+
+
+//Movement
+boolean runLeft = false;
+boolean runRight = false;
+boolean peakReached = false;
+
+//Map properties
+int tileSize = 32;
+int mapHeight = 20;
+int mapWidth = 64;
+
+//Collision
+int[][] hitBoxArray1;
+int[][] hitBoxArray2;
+int[][] hitBoxArray3;
+
+//------------------------------------------------------------
 void setup() {
     size(800, 640);
     character_idle = loadImage("../Images/character/Idle.png");
@@ -50,6 +64,36 @@ void setup() {
     character_fall = loadImage("../Images/character/Fall.png");
     background = loadImage("../Images/Background-1.png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
+
+    levelOneHitBoxes = loadImage("../Images/1.png");
+    levelTwoHitBoxes = loadImage("../Images/2.png");
+    levelThreeHitBoxes = loadImage("../Images/3.png");
+
+    levelOneHitBoxes.loadPixels();
+    levelTwoHitBoxes.loadPixels();
+    levelThreeHitBoxes.loadPixels();
+
+    hitBoxArray1 = generateHitboxes(levelOneHitBoxes);
+    hitBoxArray2 = generateHitboxes(levelTwoHitBoxes);
+    hitBoxArray3 = generateHitboxes(levelThreeHitBoxes);
+}
+
+int[][] generateHitboxes(PImage hitBoxMap) {
+    int[][] hitBoxes = new int[mapHeight][mapWidth];
+    for(int y = 0; y < mapHeight; y++){
+        for(int x = 0; x < mapWidth; x++){
+            int imgX = x * tileSize;
+            int imgY = y * tileSize;
+            int c = hitBoxMap.get(imgX + tileSize/2, imgY + tileSize/2);
+
+            if(brightness(c) != 255){
+                hitBoxes[y][x] = 1;
+            }else{
+                hitBoxes[y][x] = 0;
+            }
+        }
+    }
+    return hitBoxes;
 }
 
 void drawFlipped(PImage img, float x, float y) {
@@ -98,6 +142,30 @@ void idling(){
         drawFlipped(idleScene, x, y);
     }
 }
+
+// boolean isCollisionAbove(int[][] hitBoxArray){
+//     int playerTileX = x / tileSize;
+//     int playerTileY = y / tileSize;
+//     return hitBoxArray[playerTileY - 1][playerTileX] == 1;
+// }
+
+// boolean isCollisionBellow(int[][] hitBoxArray){
+//     int playerTileX = x / tileSize;
+//     int playerTileY = y / tileSize;
+//     return hitBoxArray[playerTileY][playerTileX] == 1;
+// }
+
+// boolean isCollisionLeft(int[][] hitBoxArray){
+//     int playerTileX = x / tileSize;
+//     int playerTileY = y / tileSize;
+//     return hitBoxArray[playerTileY][playerTileX + 1] == 1;
+// }
+
+// boolean isCollisionRight(int[][] hitBoxArray){
+//     int playerTileX = x / tileSize;
+//     int playerTileY = y / tileSize;
+//     return hitBoxArray[playerTileY][playerTileX - 1] == 1;
+// }
 
 void draw() {
     background(255);
