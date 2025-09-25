@@ -25,7 +25,7 @@ boolean showJump = true;
 
 
 //Character properties
-int x = 0;
+int x = 8*32;
 int y = 512;
 float vy = 0;
 float vx = 0;
@@ -34,12 +34,14 @@ int runSpeed = 2;
 boolean onGround = true;
 float jumpPower = -15;
 boolean doubleJumpPressed = false;
+int playerWidth = 32;
+int playerHeight = 32;
 
 
 //Physics
-float gravity = 0.8;
+float gravity = 0.6;
 float yPeak;
-float resistance = 0.8;
+float resistance = 1.8;
 
 
 //Movement
@@ -82,13 +84,28 @@ void setup() {
 
 int[][] generateHitboxes(PImage hitBoxMap) {
     int[][] hitBoxes = new int[mapHeight][mapWidth];
+
+    float targetR = 73;
+    float targetG = 97;
+    float targetB = 23;
+    float tol = 15;
+
     for(int y = 0; y < mapHeight; y++){
         for(int x = 0; x < mapWidth; x++){
             int imgX = x * tileSize;
             int imgY = y * tileSize;
             int c = hitBoxMap.get(imgX + tileSize/2, imgY + tileSize/2);
 
-            if(brightness(c) != 255){
+            float r = red(c);
+            float g = green(c);
+            float b = blue(c);
+
+            boolean isTargetGreen =
+                abs(r - targetR) < tol &&
+                abs(g - targetG) < tol &&
+                abs(b - targetB) < tol;
+
+            if(brightness(c) < 250 && !isTargetGreen){
                 hitBoxes[y][x] = 1;
             }else{
                 hitBoxes[y][x] = 0;
@@ -107,7 +124,7 @@ void drawFlipped(PImage img, float x, float y) {
 }
 
 void runLeft(){
-    vx = runSpeed;
+    vx += runSpeed;
     if(showRunAnimation){
         runCounter++;
         if (runCounter >= runDelay) {
@@ -122,7 +139,7 @@ void runLeft(){
 }
 
 void runRight(){
-    vx = (-1) * runSpeed;
+    vx += (-1) * runSpeed;
     if(showRunAnimation){
         runCounter++;
         if (runCounter >= runDelay) {
@@ -156,29 +173,45 @@ void applyRunning(){
     }
 }
 
-// boolean isCollisionAbove(int[][] hitBoxArray){
-//     int playerTileX = x / tileSize;
-//     int playerTileY = y / tileSize;
-//     return hitBoxArray[playerTileY - 1][playerTileX] == 1;
-// }
+void detectCollision(int[][] map) {
+    int left   = x / tileSize;
+    int right  = (x + playerWidth  - 1) / tileSize;
 
-// boolean isCollisionBellow(int[][] hitBoxArray){
-//     int playerTileX = x / tileSize;
-//     int playerTileY = y / tileSize;
-//     return hitBoxArray[playerTileY][playerTileX] == 1;
-// }
+    int top    = y / tileSize;
+    int bottom = (y + playerHeight - 1) / tileSize;
 
-// boolean isCollisionLeft(int[][] hitBoxArray){
-//     int playerTileX = x / tileSize;
-//     int playerTileY = y / tileSize;
-//     return hitBoxArray[playerTileY][playerTileX + 1] == 1;
-// }
+    if (vy > 0 && (map[bottom][left] == 1 && map[bottom][right] == 1)) {
+        y = bottom * tileSize - playerHeight;
+        vy = 0;
+        onGround = true;
+        showRunAnimation = true;
+        showJump = true;
+    }
 
-// boolean isCollisionRight(int[][] hitBoxArray){
-//     int playerTileX = x / tileSize;
-//     int playerTileY = y / tileSize;
-//     return hitBoxArray[playerTileY][playerTileX - 1] == 1;
-// }
+    if (vy < 0 && (map[top][left] == 1 || map[top][right] == 1)) {
+        y = (top + 1) * tileSize;
+        vy = 0;
+    }
+
+    if (vx > 0 && (map[top][right] == 1 || map[bottom][right] == 1)) {
+        x = right * tileSize - playerWidth;
+        vx = 0;
+    }
+
+    if (vx < 0 && (map[top][left] == 1 || map[bottom][left] == 1)) {
+        x = (left + 1) * tileSize;
+        vx = 0;
+    }
+
+    int tileBelow = (y + playerHeight) / tileSize;
+    if (tileBelow < map.length) {
+        boolean airBelow = map[tileBelow][left] == 0 && map[tileBelow][right] == 0;
+        if (airBelow && vy >= 0) {
+            onGround = false;
+        }
+    }
+}
+
 
 void draw() {
     background(255);
@@ -189,6 +222,8 @@ void draw() {
         idleCounter = 0;
         idleFrame = (idleFrame + 1) % 11;
     }
+
+    detectCollision(hitBoxArray1);
 
     if(!onGround){
         vy += gravity;
@@ -233,14 +268,6 @@ void draw() {
         if(y <= yPeak){
             peakReached = true;
         }
-
-        if (y >= 512) {
-            y = 512;
-            vy = 0;
-            onGround = true;
-            showRunAnimation = true;
-            showJump = true;
-        }
     }
 
     else if (keyPressed && runLeft) {
@@ -261,6 +288,23 @@ void draw() {
     }
 
     applyRunning();
+
+    for (int i = 0; i <= mapWidth; i++) {
+        line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
+    }
+
+    for (int j = 0; j <= mapHeight; j++) {
+        line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
+    }
+
+    for (int row = 0; row < mapHeight; row++) {
+        for (int col = 0; col < mapWidth; col++) {
+            textSize(24);
+            fill(0, 0, 0);
+            text(hitBoxArray1[row][col], col * tileSize, (row + 1) * tileSize);
+        }
+    }
+
 }
 
 void keyPressed(){
