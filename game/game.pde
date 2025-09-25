@@ -2,6 +2,7 @@ PImage character_idle;
 PImage character_run;
 PImage character_jump;
 PImage character_fall;
+PImage character_double_jump;
 
 PImage background;
 int idleFrame = 0;
@@ -11,6 +12,10 @@ int idleCounter = 0;
 int runFrame = 0;
 int runDelay = 4;
 int runCounter = 0;
+
+int doubleJumpFrame = 0;
+int doubleJumpDelay = 4;
+int doubleJumpCounter = 0;
 
 int x = 0;
 int y = 512;
@@ -25,12 +30,15 @@ boolean runRight = false;
 boolean onGround = true;
 
 float vy = 0;
-float gravity = 0.5;
-float jumpPower = -20;
+float gravity = 0.8;
+float jumpPower = -15;
 
 boolean showRunAnimation = true;
 boolean peakReached = false;
 float yPeak;
+
+boolean doubleJumpPressed = false;
+boolean showJump = true;
 
 //------------------------------------------------------------
 
@@ -41,6 +49,7 @@ void setup() {
     character_jump = loadImage("../Images/character/Jump.png");
     character_fall = loadImage("../Images/character/Fall.png");
     background = loadImage("../Images/Background-1.png");
+    character_double_jump = loadImage("../Images/character/Double Jump.png");
 }
 
 void drawFlipped(PImage img, float x, float y) {
@@ -104,6 +113,19 @@ void draw() {
         vy += gravity;
         y += vy;
 
+        if(doubleJumpPressed == true){
+            doubleJumpCounter++;
+            if (doubleJumpCounter >= doubleJumpDelay) {
+                doubleJumpCounter = 0;
+                doubleJumpFrame = (doubleJumpFrame + 1) % 6;
+            }
+            PImage doubleJumpScene = character_double_jump.get(doubleJumpFrame * 32, 0, 32, 32);
+            if(direction == 'l')
+                image(doubleJumpScene, x, y);
+            else
+                drawFlipped(doubleJumpScene, x, y);
+        }
+
         if (runLeft) {
             x += runSpeed;
             direction = 'l';
@@ -114,10 +136,12 @@ void draw() {
         }
 
         if(peakReached == false){
-            if(direction == 'l')
-                image(character_jump, x, y);
-            else
-                drawFlipped(character_jump, x, y);
+            if(showJump){
+                if(direction == 'l')
+                    image(character_jump, x, y);
+                else
+                    drawFlipped(character_jump, x, y);
+            }
         }else{
             if(direction == 'l')
                 image(character_fall, x, y);
@@ -134,6 +158,7 @@ void draw() {
             vy = 0;
             onGround = true;
             showRunAnimation = true;
+            showJump = true;
         }
     }
 
@@ -178,7 +203,16 @@ void keyReleased(){
         showRunAnimation = false;
         vy = jumpPower;
         yPeak = y - (vy*vy)/(2*gravity);
+        doubleJumpPressed = false;
         onGround = false;
+        peakReached = false;
+    }
+
+    else if(key == 'w' && !onGround && !doubleJumpPressed){
+        vy = jumpPower;
+        yPeak = y - (vy*vy)/(2*gravity);
+        doubleJumpPressed = true;
+        showJump = false;
         peakReached = false;
     }
 }
