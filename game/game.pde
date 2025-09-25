@@ -28,6 +28,7 @@ boolean showJump = true;
 int x = 0;
 int y = 512;
 float vy = 0;
+float vx = 0;
 char direction = 'l';
 int runSpeed = 2;
 boolean onGround = true;
@@ -38,6 +39,7 @@ boolean doubleJumpPressed = false;
 //Physics
 float gravity = 0.8;
 float yPeak;
+float resistance = 0.8;
 
 
 //Movement
@@ -105,7 +107,7 @@ void drawFlipped(PImage img, float x, float y) {
 }
 
 void runLeft(){
-    x += runSpeed;
+    vx = runSpeed;
     if(showRunAnimation){
         runCounter++;
         if (runCounter >= runDelay) {
@@ -120,8 +122,8 @@ void runLeft(){
 }
 
 void runRight(){
-    x -= runSpeed;
-        if(showRunAnimation){
+    vx = (-1) * runSpeed;
+    if(showRunAnimation){
         runCounter++;
         if (runCounter >= runDelay) {
             runCounter = 0;
@@ -140,6 +142,17 @@ void idling(){
         image(idleScene, x, y);
     }else{
         drawFlipped(idleScene, x, y);
+    }
+}
+
+void applyRunning(){
+    x += vx;
+    if (vx > 0) {
+        vx -= resistance;
+        if (vx < 0) vx = 0;
+    } else if (vx < 0) {
+        vx += resistance;
+        if (vx > 0) vx = 0;
     }
 }
 
@@ -195,11 +208,11 @@ void draw() {
         }
 
         if (runLeft) {
-            x += runSpeed;
+            vx = runSpeed;
             direction = 'l';
         }
         if (runRight) {
-            x -= runSpeed;
+            vx = -runSpeed;
             direction = 'r';
         }
 
@@ -246,6 +259,8 @@ void draw() {
             drawFlipped(idleScene, x, y);
         }
     }
+
+    applyRunning();
 }
 
 void keyPressed(){
