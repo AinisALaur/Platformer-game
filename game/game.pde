@@ -26,7 +26,7 @@ boolean showJump = true;
 
 //Character properties
 int x = 8*32;
-int y = 512;
+int y = 544;
 float vy = 0;
 float vx = 0;
 char direction = 'l';
@@ -58,6 +58,7 @@ int mapWidth = 64;
 int[][] hitBoxArray1;
 int[][] hitBoxArray2;
 int[][] hitBoxArray3;
+boolean movingIntoAwall = false;
 
 //------------------------------------------------------------
 void setup() {
@@ -174,46 +175,53 @@ void applyRunning(){
 }
 
 void detectCollision(int[][] map) {
-    int left   = x / tileSize;
-    int right  = (x + playerWidth  - 1) / tileSize;
+    int left = constrain(x / tileSize, 0, mapWidth - 1);
+    int right = constrain((x + playerWidth - 1) / tileSize, 0, mapWidth - 1);
+    int top = constrain(y / tileSize, 0, mapHeight - 1);
+    int bottom = constrain((y + playerHeight - 1) / tileSize, 0 , mapHeight - 1);
 
-    int top    = y / tileSize;
-    int bottom = (y + playerHeight - 1) / tileSize;
+    if(vy != 0 && vx > 0 && map[bottom][right] == 1 && map[bottom][left] == 0 ||
+        vy != 0 && vx < 0 && map[bottom][right] == 0 && map[bottom][left] == 1){
+        movingIntoAwall = true;
+    }
 
-    if (vy > 0 && (map[bottom][left] == 1 && map[bottom][right] == 1)) {
-        y = bottom * tileSize - playerHeight;
+    else{
+        movingIntoAwall = false;
+    }
+
+    if(vy > 0 && (map[bottom][left] == 1 || map[bottom][right] == 1) && !movingIntoAwall){
         vy = 0;
         onGround = true;
-        showRunAnimation = true;
         showJump = true;
+        showRunAnimation = true;
     }
 
-    if (vy < 0 && (map[top][left] == 1 || map[top][right] == 1)) {
-        y = (top + 1) * tileSize;
-        vy = 0;
-    }
-
-    if (vx > 0 && (map[top][right] == 1 || map[bottom][right] == 1)) {
-        x = right * tileSize - playerWidth;
-        vx = 0;
-    }
-
-    if (vx < 0 && (map[top][left] == 1 || map[bottom][left] == 1)) {
-        x = (left + 1) * tileSize;
-        vx = 0;
-    }
-
-    int tileBelow = (y + playerHeight) / tileSize;
-    if (tileBelow < map.length) {
-        boolean airBelow = map[tileBelow][left] == 0 && map[tileBelow][right] == 0;
-        if (airBelow && vy >= 0) {
-            onGround = false;
+    if(vy < 0 && (map[top][left] == 1 || map[top][right] == 1) && !movingIntoAwall){
+        if(map[bottom][left] == 0 && map[bottom][right] == 0 ){
+            y = (top + 1) * tileSize;
+            vy = 0;
+            peakReached = true;
         }
+    }
+    
+    if(vx > 0 && map[top][right] == 1){
+        vx = 0;
+        x = (right - 1) * tileSize;
+    }
+
+    if(vx < 0 && map[top][left] == 1){
+        vx = 0;
+        x = (left + 1) * tileSize;
+    }
+
+    if(map[bottom][left] == 0 && map[bottom][right] == 0){
+        onGround = false;
     }
 }
 
 
 void draw() {
+    // println(movingIntoAwall);
     background(255);
     image(background, 0, 0);
 
@@ -289,21 +297,21 @@ void draw() {
 
     applyRunning();
 
-    for (int i = 0; i <= mapWidth; i++) {
-        line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
-    }
+    // for (int i = 0; i <= mapWidth; i++) {
+    //     line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
+    // }
 
-    for (int j = 0; j <= mapHeight; j++) {
-        line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
-    }
+    // for (int j = 0; j <= mapHeight; j++) {
+    //     line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
+    // }
 
-    for (int row = 0; row < mapHeight; row++) {
-        for (int col = 0; col < mapWidth; col++) {
-            textSize(24);
-            fill(0, 0, 0);
-            text(hitBoxArray1[row][col], col * tileSize, (row + 1) * tileSize);
-        }
-    }
+    // for (int row = 0; row < mapHeight; row++) {
+    //     for (int col = 0; col < mapWidth; col++) {
+    //         textSize(24);
+    //         fill(0, 0, 0);
+    //         text(hitBoxArray1[row][col], col * tileSize, (row + 1) * tileSize);
+    //     }
+    // }
 
 }
 
