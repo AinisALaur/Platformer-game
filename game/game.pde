@@ -202,6 +202,7 @@ void detectCollision(int[][] map) {
 
     if(vy > 0 && (map[bottom][left] == 1 || map[bottom][right] == 1) && !movingIntoAwall){
         vy = 0;
+        y = (bottom - 1) * tileSize + 1;
         onGround = true;
         showJump = true;
         showRunAnimation = true;
