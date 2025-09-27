@@ -25,8 +25,8 @@ boolean showJump = true;
 
 
 //Character properties
-int x = 8*32;
-int y = 544;
+int x = 63*32;
+int y = 0;
 float vy = 0;
 float vx = 0;
 char direction = 'l';
@@ -59,6 +59,9 @@ int[][] hitBoxArray1;
 int[][] hitBoxArray2;
 int[][] hitBoxArray3;
 boolean movingIntoAwall = false;
+
+//Camera
+float camX, camY;
 
 //------------------------------------------------------------
 void setup() {
@@ -228,8 +231,12 @@ void detectCollision(int[][] map) {
 
 
 void draw() {
-    // println(movingIntoAwall);
     background(255);
+
+    camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
+    camY = 0;
+    translate(-camX, -camY);
+
     image(background, 0, 0);
 
     idleCounter++;
@@ -304,13 +311,13 @@ void draw() {
 
     applyRunning();
 
-    // for (int i = 0; i <= mapWidth; i++) {
-    //     line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
-    // }
+    for (int i = 0; i <= mapWidth; i++) {
+        line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
+    }
 
-    // for (int j = 0; j <= mapHeight; j++) {
-    //     line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
-    // }
+    for (int j = 0; j <= mapHeight; j++) {
+        line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
+    }
 
     // for (int row = 0; row < mapHeight; row++) {
     //     for (int col = 0; col < mapWidth; col++) {
