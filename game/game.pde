@@ -196,11 +196,18 @@ void detectCollision(int[][] map) {
         showRunAnimation = true;
     }
 
-    if(vy < 0 && (map[top][left] == 1 || map[top][right] == 1) && !movingIntoAwall){
-        if(map[bottom][left] == 0 && map[bottom][right] == 0 ){
-            y = (top + 1) * tileSize;
-            vy = 0;
-            peakReached = true;
+    if(vy < 0 && (map[top][left] == 1 || map[top][right] == 1)){
+        if((map[bottom][left] == 0 || map[bottom][right] == 0)){
+            if(!movingIntoAwall){
+                y = (top + 1) * tileSize;
+                vy = 0;
+                peakReached = true;
+            }else if (movingIntoAwall && (map[top][left] == 1 && map[bottom][left] == 0 ||
+                       map[top][right] == 1 && map[bottom][right] == 0)){
+                y = (top + 1) * tileSize;
+                vy = 0;
+                peakReached = true;
+            }
         }
     }
     
