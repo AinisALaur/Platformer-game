@@ -25,23 +25,24 @@ boolean showJump = true;
 
 
 //Character properties
-int x = 63*32;
-int y = 0;
+int x = 0;
+int y = 512;
+
 float vy = 0;
 float vx = 0;
+
 char direction = 'l';
-int runSpeed = 2;
+int runSpeed = 1;
 boolean onGround = true;
-float jumpPower = -15;
+float jumpPower = -10;
 boolean doubleJumpPressed = false;
 int playerWidth = 32;
 int playerHeight = 32;
 
-
 //Physics
 float gravity = 0.6;
 float yPeak;
-float resistance = 1.8;
+float resistance = 0.9;
 
 
 //Movement
@@ -53,6 +54,7 @@ boolean peakReached = false;
 int tileSize = 32;
 int mapHeight = 20;
 int mapWidth = 64;
+boolean gridOn = false;
 
 //Collision
 int[][] hitBoxArray1;
@@ -63,6 +65,10 @@ boolean movingIntoAwall = false;
 //Camera
 float camX, camY;
 
+//Current level
+int level = 1;
+int[][][] hitBoxes;
+
 //------------------------------------------------------------
 void setup() {
     size(800, 640);
@@ -70,7 +76,7 @@ void setup() {
     character_run = loadImage("../Images/character/Run.png");
     character_jump = loadImage("../Images/character/Jump.png");
     character_fall = loadImage("../Images/character/Fall.png");
-    background = loadImage("../Images/Background-1.png");
+    background = loadImage("../Images/Background-" + level + ".png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
 
     levelOneHitBoxes = loadImage("../Images/1.png");
@@ -84,6 +90,7 @@ void setup() {
     hitBoxArray1 = generateHitboxes(levelOneHitBoxes);
     hitBoxArray2 = generateHitboxes(levelTwoHitBoxes);
     hitBoxArray3 = generateHitboxes(levelThreeHitBoxes);
+    hitBoxes = new int[][][] {hitBoxArray1, hitBoxArray2, hitBoxArray3};
 }
 
 int[][] generateHitboxes(PImage hitBoxMap) {
@@ -168,6 +175,7 @@ void idling(){
 
 void applyRunning(){
     x += vx;
+    x = constrain(x, 0, 63*tileSize);
     if (vx > 0) {
         vx -= resistance;
         if (vx < 0) vx = 0;
@@ -231,6 +239,10 @@ void detectCollision(int[][] map) {
 
 
 void draw() {
+    if(y >= 20*tileSize){
+        x = 0;
+        y = 513;
+    }
     background(255);
 
     camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
@@ -245,11 +257,12 @@ void draw() {
         idleFrame = (idleFrame + 1) % 11;
     }
 
-    detectCollision(hitBoxArray1);
+    detectCollision(hitBoxes[level - 1]);
 
     if(!onGround){
         vy += gravity;
         y += vy;
+        y = constrain(y, -100*tileSize, 20*tileSize);
 
         if(doubleJumpPressed == true){
             doubleJumpCounter++;
@@ -265,11 +278,11 @@ void draw() {
         }
 
         if (runLeft) {
-            vx = runSpeed;
+            vx += runSpeed;
             direction = 'l';
         }
         if (runRight) {
-            vx = -runSpeed;
+            vx += -runSpeed;
             direction = 'r';
         }
 
@@ -311,21 +324,23 @@ void draw() {
 
     applyRunning();
 
-    for (int i = 0; i <= mapWidth; i++) {
-        line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
-    }
+    if(gridOn){
+        for (int i = 0; i <= mapWidth; i++) {
+            line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
+        }
 
-    for (int j = 0; j <= mapHeight; j++) {
-        line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
-    }
+        for (int j = 0; j <= mapHeight; j++) {
+            line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
+        }
 
-    // for (int row = 0; row < mapHeight; row++) {
-    //     for (int col = 0; col < mapWidth; col++) {
-    //         textSize(24);
-    //         fill(0, 0, 0);
-    //         text(hitBoxArray1[row][col], col * tileSize, (row + 1) * tileSize);
-    //     }
-    // }
+        for (int row = 0; row < mapHeight; row++) {
+            for (int col = 0; col < mapWidth; col++) {
+                textSize(24);
+                fill(0, 0, 0);
+                text(hitBoxes[level - 1][row][col], col * tileSize, (row + 1) * tileSize);
+            }
+        }
+    }
 
 }
 
