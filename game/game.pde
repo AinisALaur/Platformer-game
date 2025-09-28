@@ -7,6 +7,7 @@ PImage character_double_jump;
 PImage levelOneHitBoxes;
 PImage levelTwoHitBoxes;
 PImage levelThreeHitBoxes;
+PImage coin;
 PImage background;
 
 
@@ -63,12 +64,17 @@ boolean movingIntoAwall = false;
 float camX, camY;
 
 //Current level
-int level = 2;
+int level = 3;
 int[][][] hitBoxes;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
 int[][] levelEnds = new int [][]{{63, 4},{63, 1},{63, 3}}; 
-
+int[][][] coinLocations = new int [][][]{
+    {{0, 7}, {1, 12}, {23, 17}, {63,13}},
+    {{0, 7}, {11, 17}, {34, 15}, {63, 18}},
+    {{0, 1}, {16, 2}, {37, 8}, {63, 15}},
+};
+ 
 int x = levelSpawns[level - 1][0] * tileSize;
 int y = levelSpawns[level - 1][1] * tileSize;
 
@@ -81,10 +87,12 @@ void setup() {
     character_fall = loadImage("../Images/character/Fall.png");
     background = loadImage("../Images/Background-" + level + ".png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
+    coin = loadImage("../Images/Tiles/coin.png");
 
     levelOneHitBoxes = loadImage("../Images/1.png");
     levelTwoHitBoxes = loadImage("../Images/2.png");
     levelThreeHitBoxes = loadImage("../Images/3.png");
+
 
     levelOneHitBoxes.loadPixels();
     levelTwoHitBoxes.loadPixels();
@@ -185,6 +193,14 @@ void applyRunning(){
     } else if (vx < 0) {
         vx += resistance;
         if (vx > 0) vx = 0;
+    }
+}
+
+void loadCoins(){
+    for(int [] coinLoc : coinLocations[level - 1]){
+        int x1 = coinLoc[0];
+        int y1 = coinLoc[1];
+        image(coin, x1 * tileSize, y1 * tileSize);
     }
 }
 
@@ -365,6 +381,8 @@ void draw() {
             }
         }
     }
+
+    loadCoins();
 
 }
 
