@@ -204,6 +204,7 @@ void detectCollision(int[][] map) {
         vy = 0;
         y = (bottom - 1) * tileSize + 1;
         onGround = true;
+        doubleJumpPressed = false;
         showJump = true;
         showRunAnimation = true;
     }
@@ -240,6 +241,7 @@ void detectCollision(int[][] map) {
 
 
 void draw() {
+    println(doubleJumpPressed);
     if(y >= 20*tileSize){
         x = 0;
         y = 513;
@@ -368,12 +370,12 @@ void keyReleased(){
         showRunAnimation = false;
         vy = jumpPower;
         yPeak = y - (vy*vy)/(2*gravity);
-        doubleJumpPressed = false;
         onGround = false;
         peakReached = false;
     }
 
-    else if(key == 'w' && !onGround && !doubleJumpPressed){
+    else if(key == 'w' && !onGround && !doubleJumpPressed ||
+            key == 'w' && vy < 0 && !doubleJumpPressed){
         vy = jumpPower;
         yPeak = y - (vy*vy)/(2*gravity);
         doubleJumpPressed = true;
