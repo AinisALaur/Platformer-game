@@ -8,6 +8,7 @@ PImage levelOneHitBoxes;
 PImage levelTwoHitBoxes;
 PImage levelThreeHitBoxes;
 PImage coin;
+PImage flag;
 PImage background;
 
 
@@ -21,8 +22,10 @@ int runCounter = 0;
 int doubleJumpFrame = 0;
 int doubleJumpDelay = 4;
 int doubleJumpCounter = 0;
+int displayStartTime = 0;
 boolean showRunAnimation = true;
 boolean showJump = true;
+boolean displayCoinCount = false;
 
 
 //Character properties
@@ -64,16 +67,17 @@ boolean movingIntoAwall = false;
 float camX, camY;
 
 //Current level
-int level = 3;
+int level = 1;
 int[][][] hitBoxes;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
-int[][] levelEnds = new int [][]{{63, 4},{63, 1},{63, 3}}; 
+int[][] levelEnds = new int [][]{{62, 4},{63, 1},{63, 3}}; 
 int[][][] coinLocations = new int [][][]{
     {{0, 7}, {1, 12}, {23, 17}, {63,13}},
     {{0, 7}, {11, 17}, {34, 15}, {63, 18}},
     {{0, 1}, {16, 2}, {37, 8}, {63, 15}},
 };
+int coinsCollected = 0;
  
 int x = levelSpawns[level - 1][0] * tileSize;
 int y = levelSpawns[level - 1][1] * tileSize;
@@ -88,6 +92,7 @@ void setup() {
     background = loadImage("../Images/Background-" + level + ".png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
     coin = loadImage("../Images/Tiles/coin.png");
+    flag = loadImage("../Images/Tiles/flag.png");
 
     levelOneHitBoxes = loadImage("../Images/1.png");
     levelTwoHitBoxes = loadImage("../Images/2.png");
@@ -198,10 +203,31 @@ void applyRunning(){
 
 void loadCoins(){
     for(int [] coinLoc : coinLocations[level - 1]){
-        int x1 = coinLoc[0];
-        int y1 = coinLoc[1];
-        image(coin, x1 * tileSize, y1 * tileSize);
+        if(coinLoc != null){
+            int x1 = coinLoc[0];
+            int y1 = coinLoc[1];
+            image(coin, x1 * tileSize, y1 * tileSize);
+        }
     }
+}
+
+void loadFlag(){
+    int x1 = levelEnds[level - 1][0];
+    int y1 = levelEnds[level - 1][1];
+    image(flag, x1*tileSize, y1*tileSize);
+}
+
+boolean coinFound(int left, int top){
+    int [] coordinates = new int[] {left, top};
+    for(int i  = 0; i < 4; ++i){
+        int [] coinLoc = coinLocations[level - 1][i];
+        if(coinLoc != null && coordinates[0] == coinLoc[0] && coordinates[1] == coinLoc[1]){
+            coinLocations[level - 1][i] = null;
+            ++coinsCollected;
+            return true;
+        }
+    }
+    return false;
 }
 
 void detectCollision(int[][] map) {
@@ -210,18 +236,27 @@ void detectCollision(int[][] map) {
     int top = constrain(y / tileSize, 0, mapHeight - 1);
     int bottom = constrain((y + playerHeight - 1) / tileSize, 0 , mapHeight - 1);
 
-    if(left == levelEnds[level - 1][0] && top <= levelEnds[level - 1][1]){
+    if(coinFound(left, top)){
+        displayCoinCount = true;
+        displayStartTime = millis();
+    }
+
+    if(left >= levelEnds[level - 1][0] && top == levelEnds[level - 1][1]){
         if(level != 3){
             ++level;
+            vx = 0;
+            vy = 0;
             x = levelSpawns[level - 1][0]*tileSize;
             y = levelSpawns[level - 1][1]*tileSize;
             background = loadImage("../Images/Background-" + level + ".png");
         }
     }
 
-    if(left == levelSpawns[level - 1][0] - 1 && top <= levelSpawns[level - 1][1]){
+    if(left == levelSpawns[level - 1][0] - 1 && top == levelSpawns[level - 1][1]){
         if(level != 1){
             --level;
+            vx = 0;
+            vy = 0;
             x = levelEnds[level - 1][0]*tileSize;
             y = levelEnds[level - 1][1]*tileSize;
             background = loadImage("../Images/Background-" + level + ".png");
@@ -290,6 +325,8 @@ void draw() {
     translate(-camX, -camY);
 
     image(background, 0, 0);
+    loadCoins();
+    loadFlag();
 
     idleCounter++;
     if (idleCounter >= idleDelay) {
@@ -382,7 +419,15 @@ void draw() {
         }
     }
 
-    loadCoins();
+    if (displayCoinCount) {
+        if (millis() - displayStartTime < 3000) {
+            textSize(26);
+            fill(0, 0, 0);
+            text("Collected " + coinsCollected + "/ 12 coins", 350, 50);
+        } else {
+            displayCoinCount = false;
+        }
+    } 
 
 }
 
