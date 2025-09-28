@@ -25,9 +25,6 @@ boolean showJump = true;
 
 
 //Character properties
-int x = 0;
-int y = 512;
-
 float vy = 0;
 float vx = 0;
 
@@ -42,7 +39,7 @@ int playerHeight = 32;
 //Physics
 float gravity = 0.6;
 float yPeak;
-float resistance = 0.9;
+float resistance = 0.93;
 
 
 //Movement
@@ -66,8 +63,14 @@ boolean movingIntoAwall = false;
 float camX, camY;
 
 //Current level
-int level = 1;
+int level = 2;
 int[][][] hitBoxes;
+
+int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
+int[][] levelEnds = new int [][]{{63, 4},{63, 1},{63, 3}}; 
+
+int x = levelSpawns[level - 1][0] * tileSize;
+int y = levelSpawns[level - 1][1] * tileSize;
 
 //------------------------------------------------------------
 void setup() {
@@ -191,6 +194,25 @@ void detectCollision(int[][] map) {
     int top = constrain(y / tileSize, 0, mapHeight - 1);
     int bottom = constrain((y + playerHeight - 1) / tileSize, 0 , mapHeight - 1);
 
+    if(left == levelEnds[level - 1][0] && top <= levelEnds[level - 1][1]){
+        if(level != 3){
+            ++level;
+            x = levelSpawns[level - 1][0]*tileSize;
+            y = levelSpawns[level - 1][1]*tileSize;
+            background = loadImage("../Images/Background-" + level + ".png");
+        }
+    }
+
+    if(left == levelSpawns[level - 1][0] - 1 && top <= levelSpawns[level - 1][1]){
+        if(level != 1){
+            --level;
+            x = levelEnds[level - 1][0]*tileSize;
+            y = levelEnds[level - 1][1]*tileSize;
+            background = loadImage("../Images/Background-" + level + ".png");
+        }
+    }
+
+
     if(vy != 0 && vx > 0 && map[bottom][right] == 1 && map[bottom][left] == 0 ||
         vy != 0 && vx < 0 && map[bottom][right] == 0 && map[bottom][left] == 1){
         movingIntoAwall = true;
@@ -238,13 +260,12 @@ void detectCollision(int[][] map) {
         onGround = false;
     }
 }
-
+ 
 
 void draw() {
-    println(doubleJumpPressed);
     if(y >= 20*tileSize){
-        x = 0;
-        y = 513;
+        x = levelSpawns[level - 1][0] * tileSize;
+        y = levelSpawns[level - 1][1] * tileSize;
     }
     background(255);
 
