@@ -26,6 +26,7 @@ int displayStartTime = 0;
 boolean showRunAnimation = true;
 boolean showJump = true;
 boolean displayCoinCount = false;
+int coinCountX;
 
 
 //Character properties
@@ -239,6 +240,7 @@ void detectCollision(int[][] map) {
     if(coinFound(left, top)){
         displayCoinCount = true;
         displayStartTime = millis();
+        coinCountX = x;
     }
 
     if(left >= levelEnds[level - 1][0] && top == levelEnds[level - 1][1]){
@@ -423,7 +425,12 @@ void draw() {
         if (millis() - displayStartTime < 3000) {
             textSize(26);
             fill(0, 0, 0);
-            text("Collected " + coinsCollected + "/ 12 coins", 350, 50);
+            int xPos = coinCountX + 100;
+            if(coinCountX >= 1900)
+                xPos = coinCountX - 200;
+
+            text("Collected " + coinsCollected + "/ 12 coins", xPos, 50);
+            
         } else {
             displayCoinCount = false;
         }
