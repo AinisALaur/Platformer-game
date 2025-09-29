@@ -27,6 +27,11 @@ boolean showRunAnimation = true;
 boolean showJump = true;
 boolean displayCoinCount = false;
 int coinCountX;
+boolean displayLevel = true;
+int displayLevelStartTime = millis();
+
+int [] displayLevelStart = new int[]{350, 50, 200};
+int [] displayLevelEnd = new int[]{1900, 1900};
 
 
 //Character properties
@@ -57,6 +62,7 @@ int tileSize = 32;
 int mapHeight = 20;
 int mapWidth = 64;
 boolean gridOn = false;
+boolean gameOver = false;
 
 //Collision
 int[][] hitBoxArray1;
@@ -68,7 +74,7 @@ boolean movingIntoAwall = false;
 float camX, camY;
 
 //Current level
-int level = 1;
+int level = 3;
 int[][][] hitBoxes;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
@@ -78,10 +84,11 @@ int[][][] coinLocations = new int [][][]{
     {{0, 7}, {11, 17}, {34, 15}, {63, 18}},
     {{0, 1}, {16, 2}, {37, 8}, {63, 15}},
 };
-int coinsCollected = 0;
+int coinsCollected = 11;
  
-int x = levelSpawns[level - 1][0] * tileSize;
-int y = levelSpawns[level - 1][1] * tileSize;
+int x = levelEnds[level - 1][0] * tileSize;
+int y = levelEnds[level - 1][1] * tileSize;
+int displayLevelX = displayLevelStart[level - 1];
 
 //------------------------------------------------------------
 void setup() {
@@ -251,6 +258,20 @@ void detectCollision(int[][] map) {
             x = levelSpawns[level - 1][0]*tileSize;
             y = levelSpawns[level - 1][1]*tileSize;
             background = loadImage("../Images/Background-" + level + ".png");
+            displayLevelX = displayLevelStart[level - 1];
+            displayLevel = true;
+            displayLevelStartTime = millis();
+        }else{
+            if(coinsCollected == 12){
+                textSize(42);
+                fill(255, 0, 0);
+                text("Game finished!", 1500, 150);
+                gameOver = true;
+            }else{
+                textSize(42);
+                fill(255, 0, 0);
+                text("Only " + coinsCollected + " coins out of 12!", 1400, 150);
+            }
         }
     }
 
@@ -262,6 +283,9 @@ void detectCollision(int[][] map) {
             x = levelEnds[level - 1][0]*tileSize;
             y = levelEnds[level - 1][1]*tileSize;
             background = loadImage("../Images/Background-" + level + ".png");
+            displayLevelX = displayLevelEnd[level - 1];
+            displayLevel = true;
+            displayLevelStartTime = millis();
         }
     }
 
@@ -313,129 +337,144 @@ void detectCollision(int[][] map) {
         onGround = false;
     }
 }
- 
 
 void draw() {
     if(y >= 20*tileSize){
         x = levelSpawns[level - 1][0] * tileSize;
         y = levelSpawns[level - 1][1] * tileSize;
     }
-    background(255);
+    if(!gameOver){
+        background(255);
 
-    camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
-    camY = 0;
-    translate(-camX, -camY);
+        camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
+        camY = 0;
+        translate(-camX, -camY);
 
-    image(background, 0, 0);
-    loadCoins();
-    loadFlag();
+        image(background, 0, 0);
+        loadCoins();
+        loadFlag();
 
-    idleCounter++;
-    if (idleCounter >= idleDelay) {
-        idleCounter = 0;
-        idleFrame = (idleFrame + 1) % 11;
-    }
-
-    detectCollision(hitBoxes[level - 1]);
-
-    if(!onGround){
-        vy += gravity;
-        y += vy;
-        y = constrain(y, -100*tileSize, 20*tileSize);
-
-        if(doubleJumpPressed == true){
-            doubleJumpCounter++;
-            if (doubleJumpCounter >= doubleJumpDelay) {
-                doubleJumpCounter = 0;
-                doubleJumpFrame = (doubleJumpFrame + 1) % 6;
-            }
-            PImage doubleJumpScene = character_double_jump.get(doubleJumpFrame * 32, 0, 32, 32);
-            if(direction == 'l')
-                image(doubleJumpScene, x, y);
-            else
-                drawFlipped(doubleJumpScene, x, y);
+        idleCounter++;
+        if (idleCounter >= idleDelay) {
+            idleCounter = 0;
+            idleFrame = (idleFrame + 1) % 11;
         }
 
-        if (runLeft) {
-            vx += runSpeed;
-            direction = 'l';
-        }
-        if (runRight) {
-            vx += -runSpeed;
-            direction = 'r';
-        }
+        detectCollision(hitBoxes[level - 1]);
 
-        if(peakReached == false){
-            if(showJump){
+        if(!onGround){
+            vy += gravity;
+            y += vy;
+            y = constrain(y, -100*tileSize, 20*tileSize);
+
+            if(doubleJumpPressed == true){
+                doubleJumpCounter++;
+                if (doubleJumpCounter >= doubleJumpDelay) {
+                    doubleJumpCounter = 0;
+                    doubleJumpFrame = (doubleJumpFrame + 1) % 6;
+                }
+                PImage doubleJumpScene = character_double_jump.get(doubleJumpFrame * 32, 0, 32, 32);
                 if(direction == 'l')
-                    image(character_jump, x, y);
+                    image(doubleJumpScene, x, y);
                 else
-                    drawFlipped(character_jump, x, y);
+                    drawFlipped(doubleJumpScene, x, y);
             }
-        }else{
-            if(direction == 'l')
-                image(character_fall, x, y);
-            else
-                drawFlipped(character_fall, x, y);
-        }
 
-        if(y <= yPeak){
-            peakReached = true;
-        }
-    }
+            if (runLeft) {
+                vx += runSpeed;
+                direction = 'l';
+            }
+            if (runRight) {
+                vx += -runSpeed;
+                direction = 'r';
+            }
 
-    else if (keyPressed && runLeft) {
-        runLeft();
-    }
-        
-    else if(keyPressed && runRight){
-        runRight();
-    }
+            if(peakReached == false){
+                if(showJump){
+                    if(direction == 'l')
+                        image(character_jump, x, y);
+                    else
+                        drawFlipped(character_jump, x, y);
+                }
+            }else{
+                if(direction == 'l')
+                    image(character_fall, x, y);
+                else
+                    drawFlipped(character_fall, x, y);
+            }
 
-    else{
-        PImage idleScene = character_idle.get(idleFrame * 32, 0, 32, 32);
-        if(direction == 'l'){
-            image(idleScene, x, y);
-        }else{
-            drawFlipped(idleScene, x, y);
-        }
-    }
-
-    applyRunning();
-
-    if(gridOn){
-        for (int i = 0; i <= mapWidth; i++) {
-            line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
-        }
-
-        for (int j = 0; j <= mapHeight; j++) {
-            line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
-        }
-
-        for (int row = 0; row < mapHeight; row++) {
-            for (int col = 0; col < mapWidth; col++) {
-                textSize(24);
-                fill(0, 0, 0);
-                text(hitBoxes[level - 1][row][col], col * tileSize, (row + 1) * tileSize);
+            if(y <= yPeak){
+                peakReached = true;
             }
         }
-    }
 
-    if (displayCoinCount) {
-        if (millis() - displayStartTime < 3000) {
-            textSize(26);
-            fill(0, 0, 0);
-            int xPos = coinCountX + 100;
-            if(coinCountX >= 1900)
-                xPos = coinCountX - 200;
-
-            text("Collected " + coinsCollected + "/ 12 coins", xPos, 50);
+        else if (keyPressed && runLeft) {
+            runLeft();
+        }
             
-        } else {
-            displayCoinCount = false;
+        else if(keyPressed && runRight){
+            runRight();
         }
-    } 
 
+        else{
+            PImage idleScene = character_idle.get(idleFrame * 32, 0, 32, 32);
+            if(direction == 'l'){
+                image(idleScene, x, y);
+            }else{
+                drawFlipped(idleScene, x, y);
+            }
+        }
+
+        applyRunning();
+
+        if(gridOn){
+            for (int i = 0; i <= mapWidth; i++) {
+                line(i*tileSize, 0, i*tileSize, mapHeight*tileSize);
+            }
+
+            for (int j = 0; j <= mapHeight; j++) {
+                line(0, j*tileSize, mapWidth*tileSize, j*tileSize);
+            }
+
+            for (int row = 0; row < mapHeight; row++) {
+                for (int col = 0; col < mapWidth; col++) {
+                    textSize(24);
+                    fill(0, 0, 0);
+                    text(hitBoxes[level - 1][row][col], col * tileSize, (row + 1) * tileSize);
+                }
+            }
+        }
+
+        if (displayCoinCount) {
+            if (millis() - displayStartTime < 3000) {
+                textSize(26);
+                fill(0, 0, 0);
+                int xPos = coinCountX + 100;
+                if(coinCountX >= 1900)
+                    xPos = coinCountX - 250;
+
+                text("Collected " + coinsCollected + "/ 12 coins", xPos, 50);
+                
+            } else {
+                displayCoinCount = false;
+            }
+        } 
+
+        if (displayLevel) {
+            if (millis() - displayLevelStartTime < 3000) {
+                textSize(36);
+                fill(0, 0, 0);
+                int xPos = displayLevelX;
+                if(xPos >= 1900)
+                    xPos = displayLevelX - 200;
+
+                text("Level " + level, xPos, 100);
+                
+            } else {
+                displayLevel = false;
+            }
+        } 
+    }
 }
 
 void keyPressed(){
