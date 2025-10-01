@@ -1,3 +1,8 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+
 //Images
 PImage character_idle;
 PImage character_run;
@@ -10,6 +15,8 @@ PImage levelThreeHitBoxes;
 PImage coin;
 PImage flag;
 PImage background;
+PImage spriteSheet;
+PImage [] tileImages = new PImage[]{};
 
 
 //Animations
@@ -63,31 +70,25 @@ int mapHeight = 20;
 int mapWidth = 64;
 boolean gridOn = false;
 boolean gameOver = false;
+int [][][] maps = new int [3][mapHeight][mapWidth];
+String mainPath = "...";
+
 
 //Collision
-int[][] hitBoxArray1;
-int[][] hitBoxArray2;
-int[][] hitBoxArray3;
 boolean movingIntoAwall = false;
 
 //Camera
 float camX, camY;
 
 //Current level
-int level = 3;
-int[][][] hitBoxes;
+int level = 1;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
 int[][] levelEnds = new int [][]{{62, 4},{63, 1},{63, 3}}; 
-int[][][] coinLocations = new int [][][]{
-    {{0, 7}, {1, 12}, {23, 17}, {63,13}},
-    {{0, 7}, {11, 17}, {34, 15}, {63, 18}},
-    {{0, 1}, {16, 3}, {37, 8}, {63, 16}},
-};
-int coinsCollected = 11;
+int coinsCollected = 0;
  
-int x = levelEnds[level - 1][0] * tileSize;
-int y = levelEnds[level - 1][1] * tileSize;
+int x = levelSpawns[level - 1][0] * tileSize;
+int y = levelSpawns[level - 1][1] * tileSize;
 int displayLevelX = displayLevelStart[level - 1];
 
 //------------------------------------------------------------
@@ -97,58 +98,55 @@ void setup() {
     character_run = loadImage("../Images/character/Run.png");
     character_jump = loadImage("../Images/character/Jump.png");
     character_fall = loadImage("../Images/character/Fall.png");
-    background = loadImage("../Images/Background-" + level + ".png");
+    background = loadImage("../Images/Background.png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
-    coin = loadImage("../Images/Tiles/coin.png");
-    flag = loadImage("../Images/Tiles/flag.png");
+    coin = loadImage("../Images/Tiles/19.png");
+    flag = loadImage("../Images/Tiles/21.png");
+    spriteSheet = loadImage("../Images/spriteSheet.png");
 
-    levelOneHitBoxes = loadImage("../Images/1.png");
-    levelTwoHitBoxes = loadImage("../Images/2.png");
-    levelThreeHitBoxes = loadImage("../Images/3.png");
+    int maxTileId = 21;
+    tileImages = new PImage[maxTileId + 1];
+    for (int i = 1; i <= maxTileId; i++) {
+        tileImages[i] = loadImage("../Images/Tiles/" + i + ".png");
+    }
 
-
-    levelOneHitBoxes.loadPixels();
-    levelTwoHitBoxes.loadPixels();
-    levelThreeHitBoxes.loadPixels();
-
-    hitBoxArray1 = generateHitboxes(levelOneHitBoxes);
-    hitBoxArray2 = generateHitboxes(levelTwoHitBoxes);
-    hitBoxArray3 = generateHitboxes(levelThreeHitBoxes);
-    hitBoxes = new int[][][] {hitBoxArray1, hitBoxArray2, hitBoxArray3};
+    loadFromCSV();
 }
 
-int[][] generateHitboxes(PImage hitBoxMap) {
-    int[][] hitBoxes = new int[mapHeight][mapWidth];
+void loadFromCSV() {
+    for(int i = 1; i <= 3; ++i){
+        String filePath = mainPath + i + ".csv";
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            int row = 0;
+            while ((line = br.readLine()) != null && row < mapHeight) {
+                String[] values = line.trim().split("\\s+");
+                for (int col = 0; col < Math.min(values.length, mapWidth); col++) {
+                    int tileId = Integer.parseInt(values[col]);
+                    maps[i - 1][row][col] = tileId;
+                }
+                row++;
+            }
+            println("CSV loaded successfully!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
 
-    float targetR = 73;
-    float targetG = 97;
-    float targetB = 23;
-    float tol = 15;
-
-    for(int y = 0; y < mapHeight; y++){
-        for(int x = 0; x < mapWidth; x++){
-            int imgX = x * tileSize;
-            int imgY = y * tileSize;
-            int c = hitBoxMap.get(imgX + tileSize/2, imgY + tileSize/2);
-
-            float r = red(c);
-            float g = green(c);
-            float b = blue(c);
-
-            boolean isTargetGreen =
-                abs(r - targetR) < tol &&
-                abs(g - targetG) < tol &&
-                abs(b - targetB) < tol;
-
-            if(brightness(c) < 250 && !isTargetGreen){
-                hitBoxes[y][x] = 1;
-            }else{
-                hitBoxes[y][x] = 0;
+void drawMap(int level){
+    image(background, 0, 0);
+    for(int i = 0 ; i < mapHeight; ++i){
+        for(int x = 0; x < mapWidth; ++x){
+            int tileId = maps[level - 1][i][x];
+            if(tileId != 0){
+                PImage tile = tileImages[tileId];
+                image(tile, x * tileSize, i * tileSize);
             }
         }
     }
-    return hitBoxes;
 }
+
 
 void drawFlipped(PImage img, float x, float y) {
   pushMatrix();
@@ -209,31 +207,9 @@ void applyRunning(){
     }
 }
 
-void loadCoins(){
-    for(int [] coinLoc : coinLocations[level - 1]){
-        if(coinLoc != null){
-            int x1 = coinLoc[0];
-            int y1 = coinLoc[1];
-            image(coin, x1 * tileSize, y1 * tileSize);
-        }
-    }
-}
-
-void loadFlag(){
-    int x1 = levelEnds[level - 1][0];
-    int y1 = levelEnds[level - 1][1];
-    image(flag, x1*tileSize, y1*tileSize);
-}
-
-boolean coinFound(int left, int top){
-    int [] coordinates = new int[] {left, top};
-    for(int i  = 0; i < 4; ++i){
-        int [] coinLoc = coinLocations[level - 1][i];
-        if(coinLoc != null && coordinates[0] == coinLoc[0] && coordinates[1] == coinLoc[1]){
-            coinLocations[level - 1][i] = null;
-            ++coinsCollected;
-            return true;
-        }
+boolean canWalkThrough(int tileId){
+    if(tileId == 17 || tileId == 18 || tileId == 19 || tileId == 21 || tileId == 0){
+        return true;
     }
     return false;
 }
@@ -244,11 +220,7 @@ void detectCollision(int[][] map) {
     int top = constrain(y / tileSize, 0, mapHeight - 1);
     int bottom = constrain((y + playerHeight - 1) / tileSize, 0 , mapHeight - 1);
 
-    if(coinFound(left, top)){
-        displayCoinCount = true;
-        displayStartTime = millis();
-        coinCountX = x;
-    }
+    
 
     if(left >= levelEnds[level - 1][0] && top == levelEnds[level - 1][1]){
         if(level != 3){
@@ -257,7 +229,6 @@ void detectCollision(int[][] map) {
             vy = 0;
             x = levelSpawns[level - 1][0]*tileSize;
             y = levelSpawns[level - 1][1]*tileSize;
-            background = loadImage("../Images/Background-" + level + ".png");
             displayLevelX = displayLevelStart[level - 1];
             displayLevel = true;
             displayLevelStartTime = millis();
@@ -282,7 +253,6 @@ void detectCollision(int[][] map) {
             vy = 0;
             x = levelEnds[level - 1][0]*tileSize;
             y = levelEnds[level - 1][1]*tileSize;
-            background = loadImage("../Images/Background-" + level + ".png");
             displayLevelX = displayLevelEnd[level - 1];
             displayLevel = true;
             displayLevelStartTime = millis();
@@ -290,8 +260,8 @@ void detectCollision(int[][] map) {
     }
 
 
-    if(vy != 0 && vx > 0 && map[bottom][right] == 1 && map[bottom][left] == 0 ||
-        vy != 0 && vx < 0 && map[bottom][right] == 0 && map[bottom][left] == 1){
+    if(vy != 0 && vx > 0 && map[bottom][right] != 0 && !canWalkThrough(map[bottom][right]) && (map[bottom][left] == 0 || canWalkThrough(map[bottom][left]))  ||
+        vy != 0 && vx < 0 && (map[bottom][right] == 0 || canWalkThrough(map[bottom][right])) && map[bottom][left] != 0 && !canWalkThrough(map[bottom][left])){
         movingIntoAwall = true;
     }
 
@@ -299,7 +269,7 @@ void detectCollision(int[][] map) {
         movingIntoAwall = false;
     }
 
-    if(vy > 0 && (map[bottom][left] == 1 || map[bottom][right] == 1) && !movingIntoAwall){
+    if(vy > 0 && (map[bottom][left] != 0 && !canWalkThrough(map[bottom][left])  || map[bottom][right] != 0 && !canWalkThrough(map[bottom][right])) && !movingIntoAwall){
         vy = 0;
         y = (bottom - 1) * tileSize + 1;
         onGround = true;
@@ -308,14 +278,16 @@ void detectCollision(int[][] map) {
         showRunAnimation = true;
     }
 
-    if(vy < 0 && (map[top][left] == 1 || map[top][right] == 1)){
+    if (vy < 0 &&
+    ((map[top][left] != 0 && !canWalkThrough(map[top][left])) ||
+     (map[top][right] != 0 && !canWalkThrough(map[top][right])))) {
         if((map[bottom][left] == 0 || map[bottom][right] == 0)){
             if(!movingIntoAwall){
                 y = (top + 1) * tileSize;
                 vy = 0;
                 peakReached = true;
-            }else if (movingIntoAwall && (map[top][left] == 1 && map[bottom][left] == 0 ||
-                       map[top][right] == 1 && map[bottom][right] == 0)){
+            }else if (movingIntoAwall && (map[top][left] != 0 && map[bottom][left] == 0 ||
+                       map[top][right] != 0 && map[bottom][right] == 0)){
                 y = (top + 1) * tileSize;
                 vy = 0;
                 peakReached = true;
@@ -323,19 +295,37 @@ void detectCollision(int[][] map) {
         }
     }
     
-    if(vx > 0 && map[top][right] == 1){
+    if(vx > 0 && map[top][right] != 0 && !canWalkThrough(map[top][right])){
         vx = 0;
         x = (right - 1) * tileSize;
     }
 
-    if(vx < 0 && map[top][left] == 1){
+    if(vx < 0 && map[top][left] != 0 && !canWalkThrough(map[top][left])){
         vx = 0;
         x = (left + 1) * tileSize;
     }
 
-    if(map[bottom][left] == 0 && map[bottom][right] == 0){
+    if(map[bottom][left] == 0 && map[bottom][right] == 0 || (canWalkThrough(map[bottom][left]) && canWalkThrough(map[bottom][right]))){
         onGround = false;
     }
+
+    //if its a coin
+    if(map[top][left] == 19){
+        map[top][left] = 0;
+        ++coinsCollected;
+        displayCoinCount = true;
+        displayStartTime = millis();
+        coinCountX = x;
+    }
+
+    else if(map[top][right] == 19){
+        map[top][right] = 0;
+        ++coinsCollected;
+        displayCoinCount = true;
+        displayStartTime = millis();
+        coinCountX = x;
+    }
+
 }
 
 void draw() {
@@ -344,15 +334,10 @@ void draw() {
         y = levelSpawns[level - 1][1] * tileSize;
     }
     if(!gameOver){
-        background(255);
-
         camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
         camY = 0;
         translate(-camX, -camY);
-
-        image(background, 0, 0);
-        loadCoins();
-        loadFlag();
+        drawMap(level);
 
         idleCounter++;
         if (idleCounter >= idleDelay) {
@@ -360,7 +345,7 @@ void draw() {
             idleFrame = (idleFrame + 1) % 11;
         }
 
-        detectCollision(hitBoxes[level - 1]);
+        detectCollision(maps[level - 1]);
 
         if(!onGround){
             vy += gravity;
@@ -440,7 +425,7 @@ void draw() {
                 for (int col = 0; col < mapWidth; col++) {
                     textSize(24);
                     fill(0, 0, 0);
-                    text(hitBoxes[level - 1][row][col], col * tileSize, (row + 1) * tileSize);
+                    text(maps[level - 1][row][col], col * tileSize, (row + 1) * tileSize);
                 }
             }
         }
