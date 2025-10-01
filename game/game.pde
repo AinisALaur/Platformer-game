@@ -4,18 +4,14 @@ import java.io.IOException;
 
 
 //Images
+PImage end_game;
+PImage title_screen;
 PImage character_idle;
 PImage character_run;
 PImage character_jump;
 PImage character_fall;
 PImage character_double_jump;
-PImage levelOneHitBoxes;
-PImage levelTwoHitBoxes;
-PImage levelThreeHitBoxes;
-PImage coin;
-PImage flag;
 PImage background;
-PImage spriteSheet;
 PImage [] tileImages = new PImage[]{};
 
 
@@ -40,6 +36,7 @@ int displayLevelStartTime = millis();
 int [] displayLevelStart = new int[]{350, 50, 200};
 int [] displayLevelEnd = new int[]{1900, 1900};
 
+boolean showTittleScreen = true;
 
 //Character properties
 float vy = 0;
@@ -81,11 +78,11 @@ boolean movingIntoAwall = false;
 float camX, camY;
 
 //Current level
-int level = 1;
+int level = 3;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
 int[][] levelEnds = new int [][]{{62, 4},{63, 1},{63, 3}}; 
-int coinsCollected = 0;
+int coinsCollected = 12;
  
 int x = levelSpawns[level - 1][0] * tileSize;
 int y = levelSpawns[level - 1][1] * tileSize;
@@ -100,9 +97,8 @@ void setup() {
     character_fall = loadImage("../Images/character/Fall.png");
     background = loadImage("../Images/Background.png");
     character_double_jump = loadImage("../Images/character/Double Jump.png");
-    coin = loadImage("../Images/Tiles/19.png");
-    flag = loadImage("../Images/Tiles/21.png");
-    spriteSheet = loadImage("../Images/spriteSheet.png");
+    title_screen = loadImage("../Images/Tittle screen.png");
+    end_game = loadImage("../Images/End game.png");
 
     int maxTileId = 21;
     tileImages = new PImage[maxTileId + 1];
@@ -127,7 +123,6 @@ void loadFromCSV() {
                 }
                 row++;
             }
-            println("CSV loaded successfully!");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -234,9 +229,6 @@ void detectCollision(int[][] map) {
             displayLevelStartTime = millis();
         }else{
             if(coinsCollected == 12){
-                textSize(42);
-                fill(255, 0, 0);
-                text("Game finished!", 1500, 150);
                 gameOver = true;
             }else{
                 textSize(42);
@@ -329,11 +321,16 @@ void detectCollision(int[][] map) {
 }
 
 void draw() {
-    if(y >= 20*tileSize){
+    if(showTittleScreen){
+        image(title_screen, 0, 0);
+    }
+
+    else if(y >= 20*tileSize){
         x = levelSpawns[level - 1][0] * tileSize;
         y = levelSpawns[level - 1][1] * tileSize;
     }
-    if(!gameOver){
+
+    else if(!gameOver){
         camX = constrain(x - width/2 + playerWidth/2, 0, (mapWidth - 25)*tileSize);
         camY = 0;
         translate(-camX, -camY);
@@ -459,6 +456,8 @@ void draw() {
                 displayLevel = false;
             }
         } 
+    }else{
+        image(end_game, 0, 0);
     }
 }
 
@@ -473,6 +472,10 @@ void keyPressed(){
 }
 
 void keyReleased(){
+    if(keyCode == ENTER && showTittleScreen){
+        showTittleScreen = false;
+    }
+
     if(key == 'd'){
         runLeft = false;
     }
