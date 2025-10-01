@@ -77,12 +77,12 @@ boolean movingIntoAwall = false;
 //Camera
 float camX, camY;
 
-//Current level
-int level = 3;
+//Level properties
+int level = 1;
 
 int[][] levelSpawns = new int [][]{{0, 16},{1, 16},{1, 14}}; 
 int[][] levelEnds = new int [][]{{62, 4},{63, 1},{63, 3}}; 
-int coinsCollected = 12;
+int coinsCollected = 0;
  
 int x = levelSpawns[level - 1][0] * tileSize;
 int y = levelSpawns[level - 1][1] * tileSize;
@@ -209,13 +209,19 @@ boolean canWalkThrough(int tileId){
     return false;
 }
 
+boolean isInsideWall(int[][] map) {
+    // Check just the center of the player
+    int centerX = constrain((x + playerWidth / 2) / tileSize, 0, mapWidth - 1);
+    int centerY = constrain((y + playerHeight / 2) / tileSize, 0, mapHeight - 1);
+    
+    return (map[centerY][centerX] != 0 && !canWalkThrough(map[centerY][centerX]));
+}
+
 void detectCollision(int[][] map) {
     int left = constrain(x / tileSize, 0, mapWidth - 1);
     int right = constrain((x + playerWidth - 1) / tileSize, 0, mapWidth - 1);
     int top = constrain(y / tileSize, 0, mapHeight - 1);
     int bottom = constrain((y + playerHeight - 1) / tileSize, 0 , mapHeight - 1);
-
-    
 
     if(left >= levelEnds[level - 1][0] && top == levelEnds[level - 1][1]){
         if(level != 3){
@@ -251,6 +257,14 @@ void detectCollision(int[][] map) {
         }
     }
 
+    if (isInsideWall(map)) {
+        vy = 0;
+        y = (bottom - 1) * tileSize + 1;
+        onGround = true;
+        doubleJumpPressed = false;
+        showJump = true;
+        showRunAnimation = true;
+    }
 
     if(vy != 0 && vx > 0 && map[bottom][right] != 0 && !canWalkThrough(map[bottom][right]) && (map[bottom][left] == 0 || canWalkThrough(map[bottom][left]))  ||
         vy != 0 && vx < 0 && (map[bottom][right] == 0 || canWalkThrough(map[bottom][right])) && map[bottom][left] != 0 && !canWalkThrough(map[bottom][left])){
@@ -261,6 +275,19 @@ void detectCollision(int[][] map) {
         movingIntoAwall = false;
     }
 
+    //Horizontal movement
+    if(vx > 0 && map[top][right] != 0 && !canWalkThrough(map[top][right])){
+        vx = 0;
+        x = (right - 1) * tileSize;
+    }
+
+    if(vx < 0 && map[top][left] != 0 && !canWalkThrough(map[top][left])){
+        vx = 0;
+        x = (left + 1) * tileSize;
+    }
+
+
+    //Vertical movement
     if(vy > 0 && (map[bottom][left] != 0 && !canWalkThrough(map[bottom][left])  || map[bottom][right] != 0 && !canWalkThrough(map[bottom][right])) && !movingIntoAwall){
         vy = 0;
         y = (bottom - 1) * tileSize + 1;
@@ -285,16 +312,6 @@ void detectCollision(int[][] map) {
                 peakReached = true;
             }
         }
-    }
-    
-    if(vx > 0 && map[top][right] != 0 && !canWalkThrough(map[top][right])){
-        vx = 0;
-        x = (right - 1) * tileSize;
-    }
-
-    if(vx < 0 && map[top][left] != 0 && !canWalkThrough(map[top][left])){
-        vx = 0;
-        x = (left + 1) * tileSize;
     }
 
     if(map[bottom][left] == 0 && map[bottom][right] == 0 || (canWalkThrough(map[bottom][left]) && canWalkThrough(map[bottom][right]))){
