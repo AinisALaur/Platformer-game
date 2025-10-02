@@ -1,3 +1,7 @@
+/**
+*    @author: Ainis Augustas Laurinavicius
+*/ 
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -210,7 +214,6 @@ boolean canWalkThrough(int tileId){
 }
 
 boolean isInsideWall(int[][] map) {
-    // Check just the center of the player
     int centerX = constrain((x + playerWidth / 2) / tileSize, 0, mapWidth - 1);
     int centerY = constrain((y + playerHeight / 2) / tileSize, 0, mapHeight - 1);
     
@@ -249,11 +252,12 @@ void detectCollision(int[][] map) {
             --level;
             vx = 0;
             vy = 0;
-            x = levelEnds[level - 1][0]*tileSize;
+            x = (levelEnds[level - 1][0])*tileSize;
             y = levelEnds[level - 1][1]*tileSize;
             displayLevelX = displayLevelEnd[level - 1];
             displayLevel = true;
             displayLevelStartTime = millis();
+            return;
         }
     }
 
@@ -334,7 +338,6 @@ void detectCollision(int[][] map) {
         displayStartTime = millis();
         coinCountX = x;
     }
-
 }
 
 void draw() {
